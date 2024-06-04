@@ -34,22 +34,53 @@ async function run() {
 
 
         /**
-                 * -------------------------------------------
-                 *                  USERS RELATED API
-                 * -------------------------------------------
+                  -------------------------------------------
+                                 USERS RELATED API
+                  -------------------------------------------
           */
+
+        app.post('/users', async (req, res) => {
+            const user = req.body;
+            // insert email if user does not exits
+            const query = { email: user.email }
+            const existingUser = await userCollection.findOne(query)
+            if (existingUser) {
+                return res.send({ message: 'User already exits', insertedId: null })
+            }
+            const result = await userCollection.insertOne(user)
+            res.send(result)
+
+        });
 
 
 
         /**
-                * -------------------------------------------
-                *                MEALS RELATED API
-                * -------------------------------------------
+                 -------------------------------------------
+                               MEALS RELATED API
+                 -------------------------------------------
      */
+
+
+        app.get('/meals', async (req, res) => {
+            const result = await mealCollection.find().toArray()
+            res.send(result)
+        });
+
+        //get all meal for category in db
         app.get('/meal', async (req, res) => {
             const result = await mealCollection.find().toArray()
             res.send(result)
+        });
+
+        // Get a single room data from db using _id
+        app.get('/meal/:id', async (req, res) => {
+            const id = req.params.id
+            const query = { _id: new ObjectId(id) }
+            const result = await mealCollection.findOne(query)
+            res.send(result)
         })
+
+
 
 
 
