@@ -69,7 +69,7 @@ async function run() {
 
 
 
-        // users related api
+        // Get all user in db(admin)
         app.get('/users', verifyToken, verifyAdmin, async (req, res) => {
             const result = await userCollection.find().toArray();
             res.send(result);
@@ -132,9 +132,14 @@ async function run() {
             const query = { _id: new ObjectId(id) }
             const result = await mealCollection.findOne(query)
             res.send(result)
-        })
+        });
 
-
+        app.post('/meal', verifyToken, verifyAdmin, async (req, res) => {
+            const item = req.body;
+            const result = await mealCollection.insertOne(item);
+            res.send(result);
+          });
+      
 
 
 
