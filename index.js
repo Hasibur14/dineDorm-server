@@ -11,7 +11,6 @@ app.use(cors())
 app.use(express.json())
 
 
-
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@cluster0.lfxjcnl.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
@@ -33,52 +32,67 @@ async function run() {
         const userCollection = client.db('dineDorm').collection('users');
 
 
-        // jwt related api --generate jwt
+        // jwt related api
         app.post('/jwt', async (req, res) => {
-            const user = req.body
-            const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '24h' })
-            res.send({ token })
-        });
+            const user = req.body;
+            const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '24h' });
+            res.send({ token });
+        })
 
-        
-        //Middleware related api...
+        // middlewares 
         const verifyToken = (req, res, next) => {
-            // console.log('inside verify token', req.headers.authorization)
+            // console.log('inside verify token', req.headers.authorization);
             if (!req.headers.authorization) {
-                return res.status(401).send({ message: 'unauthorized access' })
+                return res.status(401).send({ message: 'unauthorized access' });
             }
             const token = req.headers.authorization.split(' ')[1];
             jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
                 if (err) {
-                    return res.status(401).send({ message: ' unauthorized access' })
+                    return res.status(401).send({ message: 'unauthorized access' })
                 }
-                req.decoded = decoded
-                next()
+                req.decoded = decoded;
+                next();
             })
-        };
+        }
 
-
-        //user verify admin after verify token
+        // use verify admin after verifyToken
         const verifyAdmin = async (req, res, next) => {
-            const email = req.decoded.email
-            console.log("67", email)
-            const query = { email: email }
-            const user = await userCollection.findOne(query)
-            console.log('70', user)
+            const email = req.decoded.email;
+            const query = { email: email };
+            const user = await userCollection.findOne(query);
             const isAdmin = user?.role === 'admin';
             if (!isAdmin) {
-                return res.status(403).send({ message: ' forbidden access' })
+                return res.status(403).send({ message: 'forbidden access' });
             }
-            next()
+            next();
         };
 
 
-        /**
-                  -------------------------------------------
-                                 USERS RELATED API
-                  -------------------------------------------
-          */
 
+        // users related api
+        app.get('/users', verifyToken, verifyAdmin, async (req, res) => {
+            const result = await userCollection.find().toArray();
+            res.send(result);
+        });
+
+        app.get('/users/admin/:email', verifyToken, async (req, res) => {
+            const email = req.params.email;
+
+            if (email !== req.decoded.email) {
+                return res.status(403).send({ message: 'forbidden access' })
+            }
+
+            const query = { email: email };
+            const user = await userCollection.findOne(query);
+            let admin = false;
+            if (user) {
+                admin = user?.role === 'admin';
+            }
+            res.send({ admin });
+        })
+
+
+        // user info save in db for user signup
         app.post('/users', async (req, res) => {
             const user = req.body;
             // insert email if user does not exits
