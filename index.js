@@ -140,6 +140,22 @@ async function run() {
             res.send(result);
         });
 
+        //update a meal
+        app.patch('/updateMeal/:id', async (req, res) => {
+            const mealData = req.body;
+            const id = req.params.id;
+            const filter = { _id: new ObjectId(id) }
+            const updatedDoc = {
+                $set: {
+                    ...mealData
+                }
+            }
+
+            const result = await mealCollection.updateOne(filter, updatedDoc)
+            res.send(result);
+        });
+
+
         //delete a single meal
         app.delete('/meal/:id', verifyToken, verifyAdmin, async (req, res) => {
             const id = req.params.id;
