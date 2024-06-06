@@ -138,8 +138,16 @@ async function run() {
             const item = req.body;
             const result = await mealCollection.insertOne(item);
             res.send(result);
-          });
-      
+        });
+
+        //delete a single meal
+        app.delete('/meal/:id', verifyToken, verifyAdmin, async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: new ObjectId(id) }
+            const result = await mealCollection.deleteOne(query);
+            res.send(result);
+        });
+
 
 
 
