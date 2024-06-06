@@ -95,7 +95,6 @@ async function run() {
         // user info save in db for user signup
         app.post('/users', async (req, res) => {
             const user = req.body;
-            // insert email if user does not exits
             const query = { email: user.email }
             const existingUser = await userCollection.findOne(query)
             if (existingUser) {
@@ -106,6 +105,18 @@ async function run() {
 
         });
 
+        // Change user role 
+        app.patch('/users/admin/:id', verifyToken, verifyAdmin, async (req, res) => {
+            const id = req.params.id
+            const filter = { _id: new ObjectId(id) }
+            const updatedDoc = {
+                $set: {
+                    role: 'admin'
+                }
+            }
+            const result = await userCollection.updateOne(filter, updatedDoc)
+            res.send(result)
+        })
 
 
         /**
@@ -141,20 +152,19 @@ async function run() {
         });
 
         //update a meal
-        app.patch('/updateMeal/:id', async (req, res) => {
-            const mealData = req.body;
+        app.patch('/meal/:id', async (req, res) => {
+            const item = req.body;
             const id = req.params.id;
             const filter = { _id: new ObjectId(id) }
             const updatedDoc = {
                 $set: {
-                    ...mealData
+                    ...item
                 }
             }
 
             const result = await mealCollection.updateOne(filter, updatedDoc)
             res.send(result);
-        });
-
+        })
 
         //delete a single meal
         app.delete('/meal/:id', verifyToken, verifyAdmin, async (req, res) => {
