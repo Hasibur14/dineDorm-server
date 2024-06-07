@@ -30,6 +30,7 @@ async function run() {
 
         const mealCollection = client.db('dineDorm').collection('meals');
         const userCollection = client.db('dineDorm').collection('users');
+        const requestMealsCollection = client.db('dineDorm').collection('requestMeals');
 
 
         // jwt related api
@@ -116,6 +117,14 @@ async function run() {
             }
             const result = await userCollection.updateOne(filter, updatedDoc)
             res.send(result)
+        });
+
+        //Delete user in db
+        app.delete('/users/:id', verifyToken, verifyAdmin, async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: new ObjectId(id) }
+            const result = await userCollection.deleteOne(query);
+            res.send(result);
         })
 
 
@@ -145,6 +154,7 @@ async function run() {
             res.send(result)
         });
 
+        // Save meals in db
         app.post('/meal', verifyToken, verifyAdmin, async (req, res) => {
             const item = req.body;
             const result = await mealCollection.insertOne(item);
@@ -171,6 +181,40 @@ async function run() {
             const id = req.params.id;
             const query = { _id: new ObjectId(id) }
             const result = await mealCollection.deleteOne(query);
+            res.send(result);
+        });
+
+
+
+        /**
+                 -------------------------------------------
+                              meal request api
+                 -------------------------------------------
+     */
+        // Get all request meals
+        app.get('/requestMeals', async (req, res) => {
+            const result = await requestMealsCollection.find().toArray()
+            res.send(result)
+        });
+
+        // app.get('/requestMeals/:email', async (req, res) => {
+        //     const email = req.params.email;
+        //     const result = await requestMealsCollection.findOne({ email });
+        //     res.send(result);
+        // });
+
+        // Save requested meals in db
+        app.post('/requestMeal', async (req, res) => {
+            const item = req.body
+            const result = await requestMealsCollection.insertOne(item)
+            res.send(result)
+        });
+
+        //delete a single Request meal
+        app.delete('/requestMeal/:id',   async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: new ObjectId(id) }
+            const result = await requestMealsCollection.deleteOne(query);
             res.send(result);
         });
 
