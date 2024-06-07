@@ -76,6 +76,12 @@ async function run() {
             res.send(result);
         });
 
+        //get user in db(user)
+        app.get('/user', async (req, res) => {
+            const result = await userCollection.find().toArray();
+            res.send(result);
+        });
+
         app.get('/users/admin/:email', verifyToken, async (req, res) => {
             const email = req.params.email;
 
@@ -184,8 +190,6 @@ async function run() {
             res.send(result);
         });
 
-
-
         /**
                  -------------------------------------------
                               meal request api
@@ -197,12 +201,6 @@ async function run() {
             res.send(result)
         });
 
-        // app.get('/requestMeals/:email', async (req, res) => {
-        //     const email = req.params.email;
-        //     const result = await requestMealsCollection.findOne({ email });
-        //     res.send(result);
-        // });
-
         // Save requested meals in db
         app.post('/requestMeal', async (req, res) => {
             const item = req.body
@@ -211,12 +209,24 @@ async function run() {
         });
 
         //delete a single Request meal
-        app.delete('/requestMeal/:id',   async (req, res) => {
+        app.delete('/requestMeal/:id', async (req, res) => {
             const id = req.params.id;
             const query = { _id: new ObjectId(id) }
             const result = await requestMealsCollection.deleteOne(query);
             res.send(result);
         });
+
+        //update delivery status
+        app.patch('/requestMeal/:id', async (req, res) => {
+            const id = req.params.id
+            const status = req.body
+            const query = { _id: new ObjectId(id) }
+            const updateDoc = {
+                $set: status,
+            }
+            const result = await requestMealsCollection.updateOne(query, updateDoc)
+            res.send(result)
+        })
 
 
 
