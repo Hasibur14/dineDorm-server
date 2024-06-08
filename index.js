@@ -3,7 +3,7 @@ const app = express();
 const cors = require('cors');
 const jwt = require('jsonwebtoken')
 require('dotenv').config();
-//const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const port = process.env.PORT || 5000;
 
 //middleware
@@ -232,14 +232,70 @@ async function run() {
         })
 
         /**
-                       -------------------------------------------
-                                   Package api
-                       -------------------------------------------
+              -------------------------------------------
+                            Package api
+             -------------------------------------------
            */
 
         app.get('/packages', async (req, res) => {
             const result = await packageCollection.find().toArray();
             res.send(result);
+        });
+
+        app.get('/package/:id', async (req, res) => {
+            const id = req.params.id
+            const query = { _id: new ObjectId(id) }
+            const result = await packageCollection.findOne(query)
+            res.send(result)
+        });
+
+        // Package checkout  from db using _id
+        app.get('/checkout/:id', async (req, res) => {
+            const id = req.params.id
+            const query = { _id: new ObjectId(id) }
+            const result = await packageCollection.findOne(query)
+            res.send(result)
+        });
+
+        /**
+            -------------------------------------------
+                    payment intent
+             -------------------------------------------
+         */
+
+
+        //payment history save in db
+        app.post('/payments', async (req, res) => {
+            const payment = req.body;
+            const paymentResult = await paymentCollection.insertOne(payment);
+            res.send({ paymentResult });
+        });
+
+
+
+        //PAYMENT INTENT
+        app.post('/create-payment-intent', async (req, res) => {
+            try {
+                const { price } = req.body;
+                const amount = parseInt(price * 100);
+                console.log(amount, 'amount inside the intent');
+
+                const paymentIntent = await stripe.paymentIntents.create({
+                    amount: amount,
+                    currency: 'usd',
+                    payment_method_types: ['card'], // Correct key name
+                });
+
+                res.send({
+                    clientSecret: paymentIntent.client_secret,
+                });
+            } catch (error) {
+                console.error('Error creating payment intent:', error.message); // Log the error message
+                if (error.raw) {
+                    console.error('Raw error:', error.raw); // Log the raw error from Stripe
+                }
+                res.status(500).send({ error: 'Internal Server Error' });
+            }
         });
 
 
