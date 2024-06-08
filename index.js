@@ -31,6 +31,8 @@ async function run() {
         const mealCollection = client.db('dineDorm').collection('meals');
         const userCollection = client.db('dineDorm').collection('users');
         const requestMealsCollection = client.db('dineDorm').collection('requestMeals');
+        const packageCollection = client.db('dineDorm').collection('packages');
+        const paymentCollection = client.db('dineDorm').collection('payments');
 
 
         // jwt related api
@@ -77,9 +79,10 @@ async function run() {
         });
 
         //get user in db(user)
-        app.get('/user', async (req, res) => {
-            const result = await userCollection.find().toArray();
-            res.send(result);
+        app.get('/user/:email', async (req, res) => {
+            const email = req.params.email
+            const result = await userCollection.findOne({ email })
+            res.send(result)
         });
 
         app.get('/users/admin/:email', verifyToken, async (req, res) => {
@@ -227,6 +230,17 @@ async function run() {
             const result = await requestMealsCollection.updateOne(query, updateDoc)
             res.send(result)
         })
+
+        /**
+                       -------------------------------------------
+                                   Package api
+                       -------------------------------------------
+           */
+
+        app.get('/packages', async (req, res) => {
+            const result = await packageCollection.find().toArray();
+            res.send(result);
+        });
 
 
 
