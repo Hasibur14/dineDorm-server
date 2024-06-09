@@ -202,7 +202,7 @@ async function run() {
 
             try {
                 const meal = await mealCollection.findOne({ _id: new ObjectId(id) });
-                
+
                 if (meal.likedBy && meal.likedBy.includes(userId)) {
                     return res.status(400).send('User has already liked this meal');
                 }
@@ -343,9 +343,32 @@ async function run() {
 
 
 
-        //  REVIEW
+        /**
+               -------------------------------------------
+                         REVIEW By USER
+                -------------------------------------------
+     */
 
+        // Get all reviews
+        app.get('/reviews', async (req, res) => {
+            const result = await reviewCollection.find().toArray()
+            res.send(result)
+        });
 
+        //user review save in db
+        app.post('/reviews', async (req, res) => {
+            const item = req.body
+            const result = await reviewCollection.insertOne(item)
+            res.send(result)
+        });
+
+        //delete a single review
+        app.delete('/review/:id', verifyToken, verifyAdmin, async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: new ObjectId(id) }
+            const result = await reviewCollection.deleteOne(query);
+            res.send(result);
+        });
 
 
 
