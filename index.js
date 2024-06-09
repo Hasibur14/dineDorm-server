@@ -31,6 +31,7 @@ async function run() {
         const mealCollection = client.db('dineDorm').collection('meals');
         const userCollection = client.db('dineDorm').collection('users');
         const requestMealsCollection = client.db('dineDorm').collection('requestMeals');
+        const reviewCollection = client.db('dineDorm').collection('reviews');
         const packageCollection = client.db('dineDorm').collection('packages');
         const paymentCollection = client.db('dineDorm').collection('payments');
 
@@ -193,6 +194,37 @@ async function run() {
             res.send(result);
         });
 
+        // Like a meal
+        // Like a meal
+        app.post('/meal/:id/like', async (req, res) => {
+            const { id } = req.params;
+            const { userId } = req.body;
+
+            try {
+                const meal = await mealCollection.findOne({ _id: new ObjectId(id) });
+                
+                if (meal.likedBy && meal.likedBy.includes(userId)) {
+                    return res.status(400).send('User has already liked this meal');
+                }
+
+                // Update the meal's like count and likedBy array
+                const updatedDoc = {
+                    $inc: { likes: 1 },
+                    $push: { likedBy: userId }
+                };
+
+                const result = await mealCollection.updateOne(
+                    { _id: new ObjectId(id) },
+                    updatedDoc
+                );
+
+                res.send(result);
+            } catch (error) {
+                res.status(500).send(error.message);
+            }
+        });
+
+
         /**
                  -------------------------------------------
                               meal request api
@@ -229,7 +261,9 @@ async function run() {
             }
             const result = await requestMealsCollection.updateOne(query, updateDoc)
             res.send(result)
-        })
+        });
+
+
 
         /**
               -------------------------------------------
@@ -306,6 +340,11 @@ async function run() {
                 res.status(500).send({ error: 'Internal Server Error' });
             }
         });
+
+
+
+        //  REVIEW
+
 
 
 
