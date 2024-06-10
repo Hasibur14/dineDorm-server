@@ -34,6 +34,7 @@ async function run() {
         const reviewCollection = client.db('dineDorm').collection('reviews');
         const packageCollection = client.db('dineDorm').collection('packages');
         const paymentCollection = client.db('dineDorm').collection('payments');
+        const upcomingMealCollection = client.db('dineDorm').collection('upcomingMeals');
 
 
         // jwt related api
@@ -226,9 +227,9 @@ async function run() {
 
 
         /**
-                 -------------------------------------------
-                              meal request api
-                 -------------------------------------------
+          -------------------------------------------
+                  meal request api
+          -------------------------------------------
      */
         // Get all request meals
         app.get('/requestMeals', async (req, res) => {
@@ -342,11 +343,10 @@ async function run() {
         });
 
 
-
         /**
                -------------------------------------------
                          REVIEW By USER
-                -------------------------------------------
+              -------------------------------------------
      */
 
         // Get all reviews
@@ -365,10 +365,10 @@ async function run() {
         //Edit review in user
         app.patch('/reviews/:id', async (req, res) => {
             const id = req.params.id;
-            const {review} = req.body;
+            const { review } = req.body;
             const query = { _id: new ObjectId(id) };
             const updateDoc = {
-                $set: {review},
+                $set: { review },
             };
             const result = await reviewCollection.updateOne(query, updateDoc);
             res.send(result);
@@ -384,9 +384,24 @@ async function run() {
         });
 
 
+        /**
+             -------------------------------------------
+                         UPCOMING MEALS
+             -------------------------------------------
+     */
+
+        app.get('/upcomingMeals', async (req, res) => {
+            const result = await upcomingMealCollection.find().toArray()
+            res.send(result)
+        })
 
 
-        // await client.db("admin").command({ ping: 1 });
+
+
+
+
+
+
         console.log("Pinged your deployment. You successfully connected to MongoDB!");
     } finally {
 
