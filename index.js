@@ -362,8 +362,21 @@ async function run() {
             res.send(result)
         });
 
+        //Edit review in user
+        app.patch('/reviews/:id', async (req, res) => {
+            const id = req.params.id;
+            const {review} = req.body;
+            const query = { _id: new ObjectId(id) };
+            const updateDoc = {
+                $set: {review},
+            };
+            const result = await reviewCollection.updateOne(query, updateDoc);
+            res.send(result);
+        });
+
+
         //delete a single review
-        app.delete('/review/:id', verifyToken, verifyAdmin, async (req, res) => {
+        app.delete('/review/:id', async (req, res) => {
             const id = req.params.id;
             const query = { _id: new ObjectId(id) }
             const result = await reviewCollection.deleteOne(query);
