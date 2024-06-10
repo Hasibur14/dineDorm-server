@@ -29,12 +29,13 @@ async function run() {
 
 
         const mealCollection = client.db('dineDorm').collection('meals');
+        const upcomingMealCollection = client.db('dineDorm').collection('upcomingMeals');
         const userCollection = client.db('dineDorm').collection('users');
         const requestMealsCollection = client.db('dineDorm').collection('requestMeals');
         const reviewCollection = client.db('dineDorm').collection('reviews');
         const packageCollection = client.db('dineDorm').collection('packages');
         const paymentCollection = client.db('dineDorm').collection('payments');
-        const upcomingMealCollection = client.db('dineDorm').collection('upcomingMeals');
+
 
 
         // jwt related api
@@ -196,7 +197,6 @@ async function run() {
         });
 
         // Like a meal
-        // Like a meal
         app.post('/meal/:id/like', async (req, res) => {
             const { id } = req.params;
             const { userId } = req.body;
@@ -311,9 +311,25 @@ async function run() {
         //payment history save in db
         app.post('/payments', async (req, res) => {
             const payment = req.body;
-            const paymentResult = await paymentCollection.insertOne(payment);
-            res.send({ paymentResult });
+            const email = payment.email;
+            const newBadge = payment.badge; 
+            try {
+                const userQuery = { email };
+                const userUpdate = {
+                    $set: {
+                        badge: newBadge
+                    }
+                };
+                await userCollection.updateOne(userQuery, userUpdate);       
+                // Save payment in paymentCollection
+                const paymentResult = await paymentCollection.insertOne(payment);     
+                res.send({ paymentResult });
+            } catch (error) {
+                console.error('Error processing payment:', error.message);
+                res.status(500).send({ error: 'Internal Server Error' });
+            }
         });
+        
 
 
 
@@ -395,9 +411,44 @@ async function run() {
             res.send(result)
         })
 
+        // Save upcoming meal in db
+        app.post('/upcomingMeal', verifyToken, verifyAdmin, async (req, res) => {
+            const item = req.body;
+            const result = await upcomingMealCollection.insertOne(item);
+            res.send(result);
+        });
 
+        // Move meal from upcomingMeals to meals
+        app.post('/moveMeal', verifyToken, verifyAdmin, async (req, res) => {
+            const { mealId } = req.body;
 
+            try {
+                console.log('Received request to move meal with ID:', mealId);
 
+                // Find the meal in the upcomingMeals collection
+                const meal = await upcomingMealCollection.findOne({ _id: new ObjectId(mealId) });
+                if (!meal) {
+                    console.log('Meal not found:', mealId);
+                    return res.status(404).send('Meal not found');
+                }
+
+                // Clone the meal document and assign a new _id
+                const newMeal = { ...meal, _id: new ObjectId() };
+
+                // Insert the meal into the meals collection
+                const insertResult = await mealCollection.insertOne(newMeal);
+                console.log('Meal inserted:', insertResult);
+
+                // Remove the meal from the upcomingMeals collection
+                const deleteResult = await upcomingMealCollection.deleteOne({ _id: new ObjectId(mealId) });
+                console.log('Meal deleted from upcomingMeals:', deleteResult);
+
+                res.status(200).send('Meal moved successfully');
+            } catch (error) {
+                console.error('Error moving meal:', error);
+                res.status(500).send('Internal Server Error');
+            }
+        });
 
 
 
